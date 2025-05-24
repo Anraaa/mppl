@@ -58,7 +58,10 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
+            ->favicon(asset('images/logo1.png'))
             ->databaseNotifications()
+            ->viteTheme('resources/css/filament/admin/theme.css')
+            ->darkMode(false)
             ->authMiddleware([
                 Authenticate::class,
             ]);

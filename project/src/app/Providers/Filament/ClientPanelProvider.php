@@ -69,6 +69,9 @@ class ClientPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
+            ->favicon(asset('images/logo1.png'))
+            ->viteTheme('resources/css/filament/admin/theme.css')
+            ->darkMode(false)
             ->authMiddleware([
                 Authenticate::class,
             ]);

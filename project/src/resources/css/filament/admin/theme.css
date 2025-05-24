@@ -2,13 +2,6 @@
 
 @config 'tailwind.config.js';
 
-[x-cloak] {
-    display: none !important;
-}
-.grid-image .filepond--item {
-    width: calc(33.3% - 0.5em);
-}
-
 .fi-topbar > nav { 
     @apply !bg-inherit ring-0 shadow-none;
 }
