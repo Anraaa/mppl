@@ -103,6 +103,21 @@ class BookingResource extends Resource
                                     ->rules([
                                         function (Forms\Get $get) {
                                             return function (string $attribute, $value, Closure $fail) use ($get) {
+                                                $now = Carbon::now();
+                                                $selectedDate = Carbon::parse($get('tanggal_booking'));
+                                                $selectedTime = Carbon::parse($value);
+                                                
+                                                // Jika tanggal booking adalah hari ini
+                                                if ($selectedDate->isToday()) {
+                                                    $minStartTime = $now->addHours(2)->format('H:00');
+                                                    
+                                                    // Jika jam mulai kurang dari 2 jam dari sekarang
+                                                    if ($selectedTime->lt($now->addHours(2))) {
+                                                        $fail("Minimal booking 2 jam dari sekarang. Jam tersedia mulai {$minStartTime}");
+                                                    }
+                                                }
+                                                
+                                                // Validasi konflik tetap berjalan
                                                 if ($get('has_conflict')) {
                                                     $fail('Studio sudah dibooking pada jam tersebut');
                                                 }
@@ -142,6 +157,21 @@ class BookingResource extends Resource
                                         'required',
                                         function (Forms\Get $get) {
                                             return function (string $attribute, $value, Closure $fail) use ($get) {
+                                                $now = Carbon::now();
+                                                $selectedDate = Carbon::parse($get('tanggal_booking'));
+                                                $selectedEndTime = Carbon::parse($value);
+                                                
+                                                // Jika tanggal booking adalah hari ini
+                                                if ($selectedDate->isToday()) {
+                                                    $minEndTime = $now->addHours(3)->format('H:00'); // Minimal 1 jam setelah jam mulai
+                                                    
+                                                    // Jika jam selesai kurang dari 3 jam dari sekarang (karena minimal booking 1 jam)
+                                                    if ($selectedEndTime->lt($now->addHours(3))) {
+                                                        $fail("Untuk booking hari ini, minimal selesai pada {$minEndTime}");
+                                                    }
+                                                }
+                                                
+                                                // Validasi waktu booking lainnya
                                                 if (!$get('studio_id') || !$get('tanggal_booking') || !$get('jam_mulai')) {
                                                     return;
                                                 }
@@ -191,6 +221,17 @@ class BookingResource extends Resource
                         ]),
                     ]),
                 
+                Forms\Components\Placeholder::make('info_booking')
+                ->content(function () {
+                    $now = Carbon::now();
+                    $minTime = $now->addHours(2)->format('H:i');
+                    return "Untuk booking hari ini, minimal 2 jam dari sekarang (Mulai {$minTime})";
+                })
+                ->visible(fn (Forms\Get $get) => 
+                    $get('tanggal_booking') && Carbon::parse($get('tanggal_booking'))->isToday()
+                ),
+                
+                
                 Forms\Components\Section::make('Konfirmasi Booking')
                     ->label('Konfirmasi Booking')
                     ->description('Tolong periksa kembali informasi booking Anda')
@@ -215,6 +256,19 @@ class BookingResource extends Resource
     {
         $jamMulai = Carbon::parse($get('jam_mulai'));
         $jamSelesai = Carbon::parse($get('jam_selesai'));
+        $now = Carbon::now();
+        $selectedDate = Carbon::parse($get('tanggal_booking'));
+
+        // Validasi untuk booking hari ini
+        if ($selectedDate->isToday()) {
+            $minStartTime = $now->addHours(2)->format('H:00');
+            
+            // Jam mulai minimal 2 jam dari sekarang
+            if ($jamMulai->lt($now->addHours(2))) {
+                $fail("Minimal booking 2 jam dari sekarang. Jam tersedia mulai {$minStartTime}");
+                return;
+            }
+        }
     
         if ($jamMulai >= $jamSelesai) {
             $fail('Jam selesai harus setelah jam mulai.');

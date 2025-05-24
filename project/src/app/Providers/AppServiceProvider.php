@@ -14,6 +14,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\ValidationException;
 use Spatie\Activitylog\Models\Activity;
 
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -28,7 +29,7 @@ class AppServiceProvider extends ServiceProvider
      * Bootstrap any application services.
      */
     public function boot(): void
-    {
+    {   
         Gate::policy(Activity::class, ActivityPolicy::class);
         Page::formActionsAlignment(Alignment::Right);
         Notifications::alignment(Alignment::End);
