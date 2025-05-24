@@ -14,4 +14,9 @@ class Studio extends Model
     public function bookings() {
         return $this->hasMany(Booking::class);
     }
+
+    public function scopeActive($query)
+{
+    return $query->where('is_active', true); // atau sesuaikan dengan field aktif yang kamu pakai
+}
 }

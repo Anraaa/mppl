@@ -27,7 +27,8 @@ class Booking extends Model
         return $this->belongsTo(Studio::class);
     }
 
-    public function payment() {
+    public function payments()
+    {
         return $this->hasOne(Payment::class);
     }
 
@@ -58,4 +59,16 @@ public function getTimeRangeAttribute()
         return Carbon::parse($this->jam_mulai)->format('H:i') . ' - ' . 
                Carbon::parse($this->jam_selesai)->format('H:i');
     }
+
+    public function getDurationInHours(): float
+{
+    if (!$this->jam_mulai || !$this->jam_selesai) {
+        return 0;
+    }
+
+    $start = Carbon::parse($this->jam_mulai);
+    $end = Carbon::parse($this->jam_selesai);
+
+    return $end->floatDiffInHours($start);
+}
 }

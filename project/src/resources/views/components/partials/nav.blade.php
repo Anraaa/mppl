@@ -17,7 +17,7 @@ $logo = \App\Models\Logo::first();
 				<ul class="navbar-nav m-auto mb-2 mb-lg-0">
 					<li class="nav-item"> <a wire:navigate class="nav-link" href="{{ route ('home') }}">Home</a></li>
 					<li class="nav-item"> <a wire:navigate class="nav-link" href="{{ route ('studio') }}">Studio</a></li>
-					<li class="nav-item"> <a wire:navigate class="nav-link" href="{{ route ('about') }}">About Me</a></li>
+					<li class="nav-item"> <a wire:navigate class="nav-link" href="{{ route ('about') }}">About Us</a></li>
 				</ul>
 			</div>
 		</div>

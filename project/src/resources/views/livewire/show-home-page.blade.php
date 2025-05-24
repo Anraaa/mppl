@@ -3,10 +3,7 @@
   $config = PageConfig::first();
 @endphp
 
-@php
-  use App\Models\Product;
-  $product = Product::orderBy('id')->get();
-@endphp
+
 <main>
 <section class="banner bg-tertiary position-relative overflow-hidden">
   <div class="container">
@@ -14,7 +11,7 @@
       <div class="col-lg-6 mb-5 mb-lg-0">
         <div class="block text-center text-lg-start pe-0 pe-xl-5">
           <h1 class="text-capitalize mb-4">{{ $config->title ?? ''}}</h1>
-          <p class="mb-4">{{ $config->detail ?? ''}}</p> 
+          <p class="mb-4" style="font-size: 18px;">{{ $config->detail ?? '' }}</p>
           <a class="btn btn-primary" href="{{ route('filament.client.auth.login') }}" >See More<span style="font-size: 14px;" class="ms-2 fas fa-arrow-right"></span></a>
         </div>
       </div>

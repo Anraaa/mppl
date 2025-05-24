@@ -148,6 +148,11 @@ class UserResource extends Resource
         ];
     }
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('viewAny', User::class);
+    }
+
     public static function getPages(): array
     {
         return [

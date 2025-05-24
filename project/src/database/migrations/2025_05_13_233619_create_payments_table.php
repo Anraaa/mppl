@@ -14,9 +14,10 @@ return new class extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('booking_id')->constrained()->onDelete('cascade');
-            $table->enum('metode', ['manual', 'midtrans'])->default('manual');
+            $table->enum('metode', ['gopay', 'va_bca', 'va_bri', 'va_bni'])->nullable()->default(null);
             $table->string('bukti_transfer')->nullable();
-            $table->enum('status', ['pending', 'verified'])->default('pending');
+            $table->enum('status', ['pending', 'waiting_verification', 'verified', 'failed'])->default('pending');
+            $table->timestamp('paid_at')->nullable();
             $table->timestamps();
         });
     }

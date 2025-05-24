@@ -32,12 +32,13 @@ Livewire::setScriptRoute(function ($handle) {
     Route::post('/client/register', [RegisteredUserController::class, 'store']);
 }); */
 
-Route::get('/payment/finish', function () {
-    // Anda bisa menambahkan logika untuk menangani redirect setelah pembayaran selesai
-    // Misalnya menampilkan halaman terima kasih atau kembali ke halaman booking
-    return redirect()->route('filament.client.resources.bookings.index')
-        ->with('success', 'Pembayaran berhasil diproses');
-})->name('payment.finish');
+// Route::get('/booking/{id}/receipt', function ($id) {
+//     $booking = \App\Models\Booking::findOrFail($id);
+
+//     return view('booking.receipt', [
+//         'booking' => $booking
+//     ]);
+// })->name('booking.receipt');
 
 Route::post('/payment/notification', function () {
     $notif = new \Midtrans\Notification();
