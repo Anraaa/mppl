@@ -57,39 +57,48 @@ class BookingResource extends Resource
                                     $set('harga_per_jam', $studio->harga_per_jam);
                                     $set('studio_name', $studio->nama_studio);
                                     $set('operational_hours', $studio->jam_operasional);
-                                    $set('operational_days', $studio->hari_operasional);
+                                    $set('operational_days', $studio->hari_operacional);
                                     
-                                    // Add studio information to be displayed
-                                    $set('studio_info', [
+                                    $facilities = $studio->fasilitas ? 
+                                        explode(',', $studio->fasilitas) : 
+                                        ['Tidak ada fasilitas khusus'];
+                                        
+                                    $studioInfo = [
                                         'nama' => $studio->nama_studio,
-                                        'deskripsi' => $studio->deskripsi,
-                                        'fasilitas' => $studio->fasilitas,
+                                        'deskripsi' => $studio->deskripsi ?? 'Tidak ada deskripsi',
+                                        'fasilitas' => $facilities,
                                         'kapasitas' => $studio->kapasitas,
                                         'jam_operasional' => $studio->jam_operasional,
                                         'hari_operasional' => $studio->hari_operasional
-                                    ]);
+                                    ];
+                                    
+                                    // Only add foto if it exists
+                                    if ($studio->foto) {
+                                        $studioInfo['foto'] = $studio->foto;
+                                    }
+                                    
+                                    $set('studio_info', $studioInfo);
                                 }
                                 $livewire->dispatch('studio-selected', studioId: $state);
                             }),
 
-                            Forms\Components\Placeholder::make('studio_info')
-                                ->label('Informasi Studio')
-                                ->content(function (Forms\Get $get) {
-                                    $info = $get('studio_info');
-                                    if (!$info) {
-                                        return 'Pilih studio untuk melihat informasi';
-                                    }
-                                    
-                                    return view('filament.components.studio-info', [
-                                        'nama' => $info['nama'] ?? '-',
-                                        'deskripsi' => $info['deskripsi'] ?? '-',
-                                        'fasilitas' => $info['fasilitas'] ?? '-',
-                                        'kapasitas' => $info['kapasitas'] ?? '-',
-                                        'jam_operasional' => $info['jam_operasional'] ?? '-',
-                                        'hari_operasional' => $info['hari_operasional'] ?? '-'
-                                    ]);
-                                })
-                                ->visible(fn (Forms\Get $get) => $get('studio_id'))
+
+                            Forms\Components\Card::make()
+                                ->schema([
+                                    Forms\Components\Placeholder::make('studio_info_card')
+                                        ->label('Detail Studio')
+                                        ->content(function (Forms\Get $get) {
+                                            $info = $get('studio_info');
+                                            if (!$info) {
+                                                return '<div class="text-center py-4 text-gray-500">Silakan pilih studio untuk melihat detail</div>';
+                                            }
+                                            
+                                            return view('filament.components.studio-info-card', [
+                                                'info' => $info
+                                            ]);
+                                        })
+                                        ->visible(fn (Forms\Get $get) => $get('studio_id'))
+                                ])
                                 ->columnSpanFull(),
                         
                         Forms\Components\Grid::make(3)
@@ -108,33 +117,47 @@ class BookingResource extends Resource
                                     ->rules([
                                         function (Forms\Get $get) {
                                             return function (string $attribute, $value, Closure $fail) use ($get) {
+                                                // Pastikan studio sudah dipilih
+                                                if (!$get('studio_id')) {
+                                                    return;
+                                                }
+
+                                                $studio = Studio::find($get('studio_id'));
+                                                if (!$studio) {
+                                                    return;
+                                                }
+
                                                 $selectedDate = Carbon::parse($value);
                                                 $selectedDate->locale('id');
                                                 $dayName = $selectedDate->isoFormat('dddd');
-                                                $operationalDays = $get('operational_days') ?? 'Senin-Minggu';
+                                                $operationalDays = $studio->hari_operasional; // Langsung dari database
                                                 
-                                                // Parse hari operasional studio
-                                                $daysRange = explode('-', $operationalDays);
-                                                $startDay = trim($daysRange[0]);
-                                                $endDay = isset($daysRange[1]) ? trim($daysRange[1]) : $startDay;
+                                                // Parse hari operasional
+                                                $daysRange = array_map('trim', explode('-', $operationalDays));
+                                                $startDay = $daysRange[0];
+                                                $endDay = $daysRange[1] ?? $startDay;
                                                 
                                                 $allDays = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
                                                 $startIndex = array_search($startDay, $allDays);
                                                 $endIndex = array_search($endDay, $allDays);
                                                 
-                                                $operationalDaysList = [];
-                                                if ($startIndex <= $endIndex) {
-                                                    $operationalDaysList = array_slice($allDays, $startIndex, $endIndex - $startIndex + 1);
-                                                } else {
-                                                    // Jika range melewati minggu (e.g. Jumat-Senin)
-                                                    $operationalDaysList = array_merge(
+                                                // Validasi format hari
+                                                if ($startIndex === false || $endIndex === false) {
+                                                    $fail('Konfigurasi hari operasional studio tidak valid');
+                                                    return;
+                                                }
+                                                
+                                                // Generate daftar hari operasional
+                                                $operationalDaysList = $startIndex <= $endIndex
+                                                    ? array_slice($allDays, $startIndex, $endIndex - $startIndex + 1)
+                                                    : array_merge(
                                                         array_slice($allDays, $startIndex),
                                                         array_slice($allDays, 0, $endIndex + 1)
                                                     );
-                                                }
                                                 
+                                                // Validasi hari
                                                 if (!in_array($dayName, $operationalDaysList)) {
-                                                    $fail("Studio tidak beroperasi pada hari {$dayName}. Hari operasional: {$operationalDays}");
+                                                    $fail("Mohon maaf {$studio->nama_studio} tidak beroperasi pada hari {$dayName}. Hari operasional: {$operationalDays}");
                                                 }
                                             };
                                         },
