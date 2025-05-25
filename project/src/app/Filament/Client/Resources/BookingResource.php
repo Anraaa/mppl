@@ -58,9 +58,39 @@ class BookingResource extends Resource
                                     $set('studio_name', $studio->nama_studio);
                                     $set('operational_hours', $studio->jam_operasional);
                                     $set('operational_days', $studio->hari_operasional);
+                                    
+                                    // Add studio information to be displayed
+                                    $set('studio_info', [
+                                        'nama' => $studio->nama_studio,
+                                        'deskripsi' => $studio->deskripsi,
+                                        'fasilitas' => $studio->fasilitas,
+                                        'kapasitas' => $studio->kapasitas,
+                                        'jam_operasional' => $studio->jam_operasional,
+                                        'hari_operasional' => $studio->hari_operasional
+                                    ]);
                                 }
                                 $livewire->dispatch('studio-selected', studioId: $state);
                             }),
+
+                            Forms\Components\Placeholder::make('studio_info')
+                                ->label('Informasi Studio')
+                                ->content(function (Forms\Get $get) {
+                                    $info = $get('studio_info');
+                                    if (!$info) {
+                                        return 'Pilih studio untuk melihat informasi';
+                                    }
+                                    
+                                    return view('filament.components.studio-info', [
+                                        'nama' => $info['nama'] ?? '-',
+                                        'deskripsi' => $info['deskripsi'] ?? '-',
+                                        'fasilitas' => $info['fasilitas'] ?? '-',
+                                        'kapasitas' => $info['kapasitas'] ?? '-',
+                                        'jam_operasional' => $info['jam_operasional'] ?? '-',
+                                        'hari_operasional' => $info['hari_operasional'] ?? '-'
+                                    ]);
+                                })
+                                ->visible(fn (Forms\Get $get) => $get('studio_id'))
+                                ->columnSpanFull(),
                         
                         Forms\Components\Grid::make(3)
                             ->schema([
