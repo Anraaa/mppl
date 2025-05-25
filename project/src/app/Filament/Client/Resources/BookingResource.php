@@ -56,6 +56,8 @@ class BookingResource extends Resource
                                 if ($studio) {
                                     $set('harga_per_jam', $studio->harga_per_jam);
                                     $set('studio_name', $studio->nama_studio);
+                                    $set('operational_hours', $studio->jam_operasional);
+                                    $set('operational_days', $studio->hari_operasional);
                                 }
                                 $livewire->dispatch('studio-selected', studioId: $state);
                             }),
@@ -73,6 +75,40 @@ class BookingResource extends Resource
                                     ->afterStateUpdated(function ($state, Forms\Set $set, $livewire) {
                                         $livewire->dispatch('date-selected', date: $state);
                                     })
+                                    ->rules([
+                                        function (Forms\Get $get) {
+                                            return function (string $attribute, $value, Closure $fail) use ($get) {
+                                                $selectedDate = Carbon::parse($value);
+                                                $selectedDate->locale('id');
+                                                $dayName = $selectedDate->isoFormat('dddd');
+                                                $operationalDays = $get('operational_days') ?? 'Senin-Minggu';
+                                                
+                                                // Parse hari operasional studio
+                                                $daysRange = explode('-', $operationalDays);
+                                                $startDay = trim($daysRange[0]);
+                                                $endDay = isset($daysRange[1]) ? trim($daysRange[1]) : $startDay;
+                                                
+                                                $allDays = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+                                                $startIndex = array_search($startDay, $allDays);
+                                                $endIndex = array_search($endDay, $allDays);
+                                                
+                                                $operationalDaysList = [];
+                                                if ($startIndex <= $endIndex) {
+                                                    $operationalDaysList = array_slice($allDays, $startIndex, $endIndex - $startIndex + 1);
+                                                } else {
+                                                    // Jika range melewati minggu (e.g. Jumat-Senin)
+                                                    $operationalDaysList = array_merge(
+                                                        array_slice($allDays, $startIndex),
+                                                        array_slice($allDays, 0, $endIndex + 1)
+                                                    );
+                                                }
+                                                
+                                                if (!in_array($dayName, $operationalDaysList)) {
+                                                    $fail("Studio tidak beroperasi pada hari {$dayName}. Hari operasional: {$operationalDays}");
+                                                }
+                                            };
+                                        },
+                                    ])
                                     ->suffixIcon('heroicon-o-calendar'),
                                 
                                 Forms\Components\TimePicker::make('jam_mulai')
@@ -111,13 +147,28 @@ class BookingResource extends Resource
                                                 if ($selectedDate->isToday()) {
                                                     $minStartTime = $now->addHours(2)->format('H:00');
                                                     
-                                                    // Jika jam mulai kurang dari 2 jam dari sekarang
                                                     if ($selectedTime->lt($now->addHours(2))) {
                                                         $fail("Minimal booking 2 jam dari sekarang. Jam tersedia mulai {$minStartTime}");
                                                     }
                                                 }
                                                 
-                                                // Validasi konflik tetap berjalan
+                                                // Validasi jam operasional studio
+                                                $operationalHours = $get('operational_hours') ?? '09:00 - 21:00';
+                                                [$openTime, $closeTime] = explode('-', $operationalHours);
+                                                $openTime = trim($openTime);
+                                                $closeTime = trim($closeTime);
+                                                
+                                                $openHour = Carbon::parse($openTime);
+                                                $closeHour = Carbon::parse($closeTime);
+                                                
+                                                if ($selectedTime->lt($openHour)) {
+                                                    $fail("Studio buka mulai pukul {$openTime}");
+                                                }
+                                                
+                                                if ($selectedTime->gte($closeHour)) {
+                                                    $fail("Studio tutup sebelum pukul {$closeTime}");
+                                                }
+                                                
                                                 if ($get('has_conflict')) {
                                                     $fail('Studio sudah dibooking pada jam tersebut');
                                                 }
@@ -127,6 +178,9 @@ class BookingResource extends Resource
 
                                 Forms\Components\Hidden::make('has_conflict')
                                     ->default(false),
+                                    
+                                Forms\Components\Hidden::make('operational_hours'),
+                                Forms\Components\Hidden::make('operational_days'),
 
                                 Forms\Components\TimePicker::make('jam_selesai')
                                     ->label('Jam Selesai')
@@ -163,15 +217,25 @@ class BookingResource extends Resource
                                                 
                                                 // Jika tanggal booking adalah hari ini
                                                 if ($selectedDate->isToday()) {
-                                                    $minEndTime = $now->addHours(3)->format('H:00'); // Minimal 1 jam setelah jam mulai
+                                                    $minEndTime = $now->addHours(3)->format('H:00');
                                                     
-                                                    // Jika jam selesai kurang dari 3 jam dari sekarang (karena minimal booking 1 jam)
                                                     if ($selectedEndTime->lt($now->addHours(3))) {
                                                         $fail("Untuk booking hari ini, minimal selesai pada {$minEndTime}");
                                                     }
                                                 }
                                                 
-                                                // Validasi waktu booking lainnya
+                                                // Validasi jam operasional studio
+                                                $operationalHours = $get('operational_hours') ?? '09:00 - 21:00';
+                                                [$openTime, $closeTime] = explode('-', $operationalHours);
+                                                $openTime = trim($openTime);
+                                                $closeTime = trim($closeTime);
+                                                
+                                                $closeHour = Carbon::parse($closeTime);
+                                                
+                                                if ($selectedEndTime->gt($closeHour)) {
+                                                    $fail("Studio tutup pada pukul {$closeTime}");
+                                                }
+                                                
                                                 if (!$get('studio_id') || !$get('tanggal_booking') || !$get('jam_mulai')) {
                                                     return;
                                                 }
@@ -180,7 +244,6 @@ class BookingResource extends Resource
                                             };
                                         },
                                     ]),
-                                
                             ]),
                         
                         Forms\Components\Grid::make(2)
@@ -208,48 +271,48 @@ class BookingResource extends Resource
                             ->rows(3),
                     ]),
                 
-                Forms\Components\Section::make('Pembayaran')
-                    ->visible(fn ($record) => $record && $record->status === 'pending')
-                    ->schema([
-                        Forms\Components\Actions::make([
-                            Forms\Components\Actions\Action::make('payNow')
-                                ->label('Bayar Sekarang')
-                                ->url(fn ($record) => static::getUrl('payment', ['record' => $record->id]))
-                                ->button()
-                                ->color('success')
-                                ->icon('heroicon-o-credit-card'),
-                        ]),
-                    ]),
-                
-                Forms\Components\Placeholder::make('info_booking')
-                ->content(function () {
-                    $now = Carbon::now();
-                    $minTime = $now->addHours(2)->format('H:i');
-                    return "Untuk booking hari ini, minimal 2 jam dari sekarang (Mulai {$minTime})";
-                })
-                ->visible(fn (Forms\Get $get) => 
-                    $get('tanggal_booking') && Carbon::parse($get('tanggal_booking'))->isToday()
-                ),
-                
-                
-                Forms\Components\Section::make('Konfirmasi Booking')
-                    ->label('Konfirmasi Booking')
-                    ->description('Tolong periksa kembali informasi booking Anda')
-                    ->visible(fn ($operation) => $operation === 'create' || $operation === 'edit')
-                    ->schema([
-                        Forms\Components\Placeholder::make('Konfirmasi')
-                            ->content(function (Forms\Get $get) {
-                                $studioId = $get('studio_id');
-                                $studioName = $studioId ? Studio::find($studioId)?->nama_studio : 'Studio belum dipilih';
-                                $date = $get('tanggal_booking') ? Carbon::parse($get('tanggal_booking'))->format('l, j F Y') : 'Tanggal belum dipilih';
-                                $start = $get('jam_mulai') ? Carbon::parse($get('jam_mulai'))->format('H:i') : '--';
-                                $end = $get('jam_selesai') ? Carbon::parse($get('jam_selesai'))->format('H:i') : '--';
-                                $total = $get('total_bayar') ? 'Rp' . number_format($get('total_bayar'), 0, ',', '.') : 'Rp0';
-                                
-                                return "Anda akan membooking: {$studioName} Pada: {$date}\nJam: {$start} - {$end}\nTotal Pembayaran: {$total}";
-                            }),
-                    ]),
-            ]);
+                        Forms\Components\Section::make('Pembayaran')
+                            ->visible(fn ($record) => $record && $record->status === 'pending')
+                            ->schema([
+                                Forms\Components\Actions::make([
+                                    Forms\Components\Actions\Action::make('payNow')
+                                        ->label('Bayar Sekarang')
+                                        ->url(fn ($record) => static::getUrl('payment', ['record' => $record->id]))
+                                        ->button()
+                                        ->color('success')
+                                        ->icon('heroicon-o-credit-card'),
+                                ]),
+                            ]),
+                        
+                        Forms\Components\Placeholder::make('info_booking')
+                        ->content(function () {
+                            $now = Carbon::now();
+                            $minTime = $now->addHours(2)->format('H:i');
+                            return "Untuk booking hari ini, minimal 2 jam dari sekarang (Mulai {$minTime})";
+                        })
+                        ->visible(fn (Forms\Get $get) => 
+                            $get('tanggal_booking') && Carbon::parse($get('tanggal_booking'))->isToday()
+                        ),
+                        
+                        
+                        Forms\Components\Section::make('Konfirmasi Booking')
+                            ->label('Konfirmasi Booking')
+                            ->description('Tolong periksa kembali informasi booking Anda')
+                            ->visible(fn ($operation) => $operation === 'create' || $operation === 'edit')
+                            ->schema([
+                                Forms\Components\Placeholder::make('Konfirmasi')
+                                    ->content(function (Forms\Get $get) {
+                                        $studioId = $get('studio_id');
+                                        $studioName = $studioId ? Studio::find($studioId)?->nama_studio : 'Studio belum dipilih';
+                                        $date = $get('tanggal_booking') ? Carbon::parse($get('tanggal_booking'))->format('l, j F Y') : 'Tanggal belum dipilih';
+                                        $start = $get('jam_mulai') ? Carbon::parse($get('jam_mulai'))->format('H:i') : '--';
+                                        $end = $get('jam_selesai') ? Carbon::parse($get('jam_selesai'))->format('H:i') : '--';
+                                        $total = $get('total_bayar') ? 'Rp' . number_format($get('total_bayar'), 0, ',', '.') : 'Rp0';
+                                        
+                                        return "Anda akan membooking: {$studioName} Pada: {$date}\nJam: {$start} - {$end}\nTotal Pembayaran: {$total}";
+                                    }),
+                            ]),
+                    ]);
     }
 
     protected static function validateBookingTime(Forms\Get $get, Closure $fail): void
@@ -263,7 +326,6 @@ class BookingResource extends Resource
         if ($selectedDate->isToday()) {
             $minStartTime = $now->addHours(2)->format('H:00');
             
-            // Jam mulai minimal 2 jam dari sekarang
             if ($jamMulai->lt($now->addHours(2))) {
                 $fail("Minimal booking 2 jam dari sekarang. Jam tersedia mulai {$minStartTime}");
                 return;
@@ -285,39 +347,31 @@ class BookingResource extends Resource
             return;
         }
     
-        if ($jamMulai->format('H:i') < '09:00' || $jamSelesai->format('H:i') > '21:00') {
-            $fail('Jam booking hanya tersedia antara 09:00 - 21:00.');
+        // Validasi jam operasional studio
+        $operationalHours = $get('operational_hours') ?? '09:00 - 21:00';
+        [$openTime, $closeTime] = explode('-', $operationalHours);
+        $openTime = trim($openTime);
+        $closeTime = trim($closeTime);
+        
+        $openHour = Carbon::parse($openTime);
+        $closeHour = Carbon::parse($closeTime);
+        
+        if ($jamMulai->format('H:i') < $openTime || $jamSelesai->format('H:i') > $closeTime) {
+            $fail("Jam booking hanya tersedia antara {$openTime} - {$closeTime}");
             return;
         }
     
         if ($get('studio_id') && $get('tanggal_booking')) {
-            $jamMulai = Carbon::parse($get('jam_mulai'));
-            $jamSelesai = Carbon::parse($get('jam_selesai'));
-        
-            \Log::info('Jam Mulai: ' . $jamMulai);
-            \Log::info('Jam Selesai: ' . $jamSelesai);
-        
             $conflicts = Booking::where('studio_id', $get('studio_id'))
-            ->whereDate('tanggal_booking', $get('tanggal_booking'))
-            ->where(function ($query) use ($jamMulai, $jamSelesai) {
-                $query->where(function ($q) use ($jamMulai, $jamSelesai) {
-                    $q->where('jam_mulai', '<', $jamSelesai->format('H:i:s'))
-                      ->where('jam_selesai', '>', $jamMulai->format('H:i:s'));
-                });
-            })
-            ->where('id', '!=', $get('id') ?? 0)
-            ->exists();
-
-            \Log::info('Checking conflicts for:', [
-                'studio_id' => $get('studio_id'),
-                'tanggal_booking' => $get('tanggal_booking'),
-                'jam_mulai' => $jamMulai->format('Y-m-d H:i:s'),
-                'jam_selesai' => $jamSelesai->format('Y-m-d H:i:s'),
-                'existing_bookings' => Booking::where('studio_id', $get('studio_id'))
-                    ->whereDate('tanggal_booking', $get('tanggal_booking'))
-                    ->get(['jam_mulai', 'jam_selesai'])
-                    ->toArray()
-            ]);
+                ->whereDate('tanggal_booking', $get('tanggal_booking'))
+                ->where(function ($query) use ($jamMulai, $jamSelesai) {
+                    $query->where(function ($q) use ($jamMulai, $jamSelesai) {
+                        $q->where('jam_mulai', '<', $jamSelesai->format('H:i:s'))
+                          ->where('jam_selesai', '>', $jamMulai->format('H:i:s'));
+                    });
+                })
+                ->where('id', '!=', $get('id') ?? 0)
+                ->exists();
 
             if ($conflicts) {
                 $fail('Studio sudah dibooking pada jam tersebut. Silakan pilih jam lain.');
@@ -325,7 +379,7 @@ class BookingResource extends Resource
         }
     }
     
-    protected static function calculateTotal(Forms\Get $get): float
+        protected static function calculateTotal(Forms\Get $get): float
     {
         $hargaPerJam = $get('harga_per_jam');
         $jamMulai = Carbon::parse($get('jam_mulai'));
@@ -453,4 +507,5 @@ class BookingResource extends Resource
             'print-receipt' => PrintReceipt::route('/{record}/print-receipt'), // Add receipt route
         ];
     }
+
 }
