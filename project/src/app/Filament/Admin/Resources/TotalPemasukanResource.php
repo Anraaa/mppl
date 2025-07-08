@@ -270,6 +270,8 @@ class TotalPemasukanResource extends Resource
     {
         return [
             'index' => Pages\ListTotalPemasukans::route('/'),
+            'create' => Pages\CreateTotalPemasukan::route('/create'),
+            'edit' => Pages\EditTotalPemasukan::route('/{record}/edit'),
         ];
     }
 }

@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use App\Services\BookingConflictService;
 use Closure;
 use App\Filament\Client\Resources\BookingResource\Pages\PrintReceipt;
+use Illuminate\Database\Eloquent\Model;
 
 class BookingResource extends Resource
 {
@@ -157,7 +158,7 @@ class BookingResource extends Resource
                                                 
                                                 // Validasi hari
                                                 if (!in_array($dayName, $operationalDaysList)) {
-                                                    $fail("Mohon maaf {$studio->nama_studio} tidak beroperasi pada hari {$dayName}. Hari operasional: {$operationalDays}");
+                                                    $fail("Maas Maf {$studio->nama_studio} tidak beroperasi pada hari {$dayName}. Hari operasional: {$operationalDays}");
                                                 }
                                             };
                                         },
@@ -541,6 +542,11 @@ class BookingResource extends Resource
     }
 
     public static function canCreate(): bool
+    {
+        return true;
+    }
+
+    public static function canEdit(Model $record): bool
     {
         return true;
     }

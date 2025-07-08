@@ -61,20 +61,6 @@
                                 <span class="text-sm">VA BCA</span>
                             </label>
                         </div>
-                        <div>
-                            <input type="radio" id="va_bri" wire:model="metode" value="va_bri" class="hidden peer">
-                            <label for="va_bri" class="flex flex-col items-center p-3 border border-gray-200 rounded-lg cursor-pointer peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:border-gray-700 dark:peer-checked:border-primary-500 dark:peer-checked:bg-gray-800">
-                                <img src="{{ asset('images/payment/bri.png') }}" alt="BRI" class="h-8 mb-2">
-                                <span class="text-sm">VA BRI</span>
-                            </label>
-                        </div>
-                        <div>
-                            <input type="radio" id="va_bni" wire:model="metode" value="va_bni" class="hidden peer">
-                            <label for="va_bni" class="flex flex-col items-center p-3 border border-gray-200 rounded-lg cursor-pointer peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:border-gray-700 dark:peer-checked:border-primary-500 dark:peer-checked:bg-gray-800">
-                                <img src="{{ asset('images/payment/bni.png') }}" alt="BNI" class="h-8 mb-2">
-                                <span class="text-sm">VA BNI</span>
-                            </label>
-                        </div>
                     </div>
                     @error('metode') <span class="text-red-600 text-sm mt-1 block">{{ $message }}</span> @enderror
                 </div>

@@ -21,7 +21,11 @@ use Filament\Navigation\MenuItem;
 use App\Filament\Client\Pages\StudioAvailability;
 use App\Filament\Client\Resources\BookingResource;
 use App\Filament\Client\Resources\BookingResource\Pages\PaymentBooking;
+use App\Filament\Pages\Auth\EditProfile;
 use App\Models\Payment;
+use App\Http\Responses\Client\LoginResponse;
+use Filament\Navigation\NavigationItem;
+use Filament\Pages\Auth\EditProfile as AuthEditProfile;
 
 class ClientPanelProvider extends PanelProvider
 {
@@ -32,19 +36,20 @@ class ClientPanelProvider extends PanelProvider
             ->path('client')
             ->login()
             ->registration()
-            ->authGuard('web')
             ->maxContentWidth('full')
+            ->passwordReset()
+            ->breadcrumbs(false)
             ->spa()
             //->defaultRole('user') 
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Emerald,
             ])
             ->userMenuItems([
                 MenuItem::make()
                     ->label('Admin Panel')
                     ->icon('heroicon-o-cog-6-tooth')
                     ->url('/admin')
-                    ->visible(fn (): bool => auth()->user()->hasRole('super_admin'))
+                    ->visible(fn(): bool => auth()->user()->hasRole('super_admin'))
             ])
             ->discoverResources(in: app_path('Filament/Client/Resources'), for: 'App\\Filament\\Client\\Resources')
             ->discoverPages(in: app_path('Filament/Client/Pages'), for: 'App\\Filament\\Client\\Pages')
@@ -78,10 +83,9 @@ class ClientPanelProvider extends PanelProvider
     }
 
     public function resources(): array
-{
-    return [
-        \App\Filament\Client\Resources\BookingResource::class,
-    ];
-}
-
+    {
+        return [
+            \App\Filament\Client\Resources\BookingResource::class,
+        ];
+    }
 }

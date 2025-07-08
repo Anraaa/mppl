@@ -34,8 +34,8 @@ class ListBookings extends ListRecords
                 ->badge($this->getModel()::where('status', 'confirmed')->count()),
             
             'cancelled' => Tab::make('Cancelled')
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'cancelled'))
-                ->badge($this->getModel()::where('status', 'cancelled')->count()),
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'canceled'))
+                ->badge($this->getModel()::where('status', 'canceled')->count()),
         ];
     }
 }
