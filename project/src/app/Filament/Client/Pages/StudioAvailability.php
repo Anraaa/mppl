@@ -41,10 +41,10 @@ class StudioAvailability extends Page implements HasForms
         return [
             Select::make('studioId')
                 ->label('Pilih Studio')
-                ->options(fn () => Studio::query()->pluck('nama_studio', 'id'))
+                ->options(fn() => Studio::query()->pluck('nama_studio', 'id'))
                 ->searchable()
                 ->reactive()
-                ->afterStateUpdated(fn ($state) => $this->handleStudioOrDateChange()),
+                ->afterStateUpdated(fn($state) => $this->handleStudioOrDateChange()),
 
             DatePicker::make('selectedDate')
                 ->label('Pilih Tanggal')
@@ -52,8 +52,32 @@ class StudioAvailability extends Page implements HasForms
                 ->maxDate(now()->addMonths(3))
                 ->default(now())
                 ->reactive()
-                ->afterStateUpdated(fn ($state) => $this->handleStudioOrDateChange()),
+                ->afterStateUpdated(fn($state) => $this->handleStudioOrDateChange()),
         ];
+    }
+
+    // In your Livewire component
+    public function prepareBookedSlots()
+    {
+        $bookings = Booking::where('studio_id', $this->studioId)
+            ->whereDate('tanggal_booking', $this->selectedDate)
+            ->with('user') // Eager load user relationship
+            ->get();
+
+        return $bookings->map(function ($booking) {
+            return [
+                'start' => $booking->jam_mulai,
+                'end' => $booking->jam_selesai,
+                'booking' => [
+                    'booking_id' => $booking->id,
+                    'jam_mulai' => $booking->jam_mulai,
+                    'jam_selesai' => $booking->jam_selesai,
+                    'status' => $booking->status,
+                    'user' => $booking->user->name ?? 'Unknown',
+                    'total_bayar' => $booking->total_bayar ?? 0, // Ensure this key exists with default value
+                ]
+            ];
+        })->toArray();
     }
 
     protected function handleStudioOrDateChange(): void
@@ -117,6 +141,7 @@ class StudioAvailability extends Page implements HasForms
                 'end' => $slotEnd->format('H:i'),
                 'status' => $isBooked ? 'booked' : 'available',
                 'booking' => $bookingInfo,
+                'total_bayar' => $bookingInfo['total_bayar'] ?? 0, // Ensure this key exists with default value
             ];
 
             $currentSlot->addHour();
