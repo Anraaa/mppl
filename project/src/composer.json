@@ -12,6 +12,7 @@
         "aymanalhattami/filament-slim-scrollbar": "*",
         "bezhansalleh/filament-shield": "*",
         "blade-ui-kit/blade-heroicons": "^2.6",
+        "darkaonline/l5-swagger": "^9.0",
         "diogogpinto/filament-auth-ui-enhancer": "*",
         "doctrine/dbal": "^4.2",
         "filament/filament": "^3.3",

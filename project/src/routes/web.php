@@ -9,6 +9,8 @@ use Livewire\Livewire;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\MidtransCallbackController;
 use App\Http\Controllers\MidtransController;
+use App\Http\Livewire\Client\StudioAvailability;
+
 
 /* NOTE: Do Not Remove
 / Livewire asset handling if using sub folder in domain
@@ -76,9 +78,8 @@ Route::post('/payment/notification', function () {
     return response()->json(['status' => 'success']);
 })->name('payment.notification');
 
-// routes/web.php
-Route::post('/payment-notification', [MidtransController::class, 'handleNotification'])
-     ->name('payment.notification');
+//Route::get('/cek-ketersediaan', StudioAvailability::class)->name('cek-ketersediaan');
+
 
 
 Route::get('/', ShowHomePage::class)->name('home');

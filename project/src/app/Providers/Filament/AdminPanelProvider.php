@@ -18,6 +18,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Navigation\MenuItem;
+use Filament\Navigation\NavigationItem;
+
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -31,6 +33,13 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
+            ->navigationItems([
+            NavigationItem::make('API Documentation')
+                ->url('/api/documentation')
+                ->icon('heroicon-o-code-bracket-square')
+                ->openUrlInNewTab()
+                ->group('Utilities'),
+        ])
             ->userMenuItems([
                 MenuItem::make()
                     ->label('Client Panel')

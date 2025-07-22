@@ -240,4 +240,3 @@
         @endif
     </div>
 </x-filament::page>
-
