@@ -398,10 +398,7 @@ class BookingResource extends Resource
         $current = $minStart->copy();
 
         while ($current->lte($closeTime)) {
-            $available[] = [
-                'start' => $current->format('H:00'),
-                'end' => $current->copy()->addHour()->format('H:00')
-            ];
+            $available[] = $current->format('H:00'); // Just return the times
             $current->addHour();
         }
 

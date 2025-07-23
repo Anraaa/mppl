@@ -80,8 +80,6 @@ Route::post('/payment/notification', function () {
 
 //Route::get('/cek-ketersediaan', StudioAvailability::class)->name('cek-ketersediaan');
 
-
-
 Route::get('/', ShowHomePage::class)->name('home');
 ROute::get('/studio', ShowStudio::class)->name('studio');
 Route::get('/about', ShowAbout::class)->name('about');

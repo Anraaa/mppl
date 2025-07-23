@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Client\Pages\Dashboard;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -21,6 +22,7 @@ use Filament\Navigation\MenuItem;
 use App\Filament\Client\Pages\StudioAvailability;
 use App\Filament\Client\Resources\BookingResource;
 use App\Filament\Client\Resources\BookingResource\Pages\PaymentBooking;
+use App\Filament\Client\Resources\DashboardResource;
 use App\Filament\Pages\Auth\EditProfile;
 use App\Models\Payment;
 use App\Http\Responses\Client\LoginResponse;
