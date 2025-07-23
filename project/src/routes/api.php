@@ -23,6 +23,10 @@ Route::middleware('apikey')->group(function () {
     Route::post('/studios/decrypt', [StudioController::class, 'decryptResponse']); // decrypt endpoint
 });
 
+
+Route::get('/public-studios', [StudioController::class, 'index']);
+
+
 Route::get('/studio/{id}/availability', function ($id) {
     $date = request('date');
 

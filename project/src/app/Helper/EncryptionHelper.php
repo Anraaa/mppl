@@ -3,22 +3,21 @@
 namespace App\Helper;
 
 use Illuminate\Support\Facades\Crypt;
-use PhpParser\Node\Stmt\TryCatch;
 
 class EncryptionHelper
 {
     public static function encrypt($data)
     {
-        $key = env('KEY_ENCRYPT', 'defaultkey');
-        return Crypt::encryptString($data, false);
+        return Crypt::encryptString($data);
     }
 
-    public static function decrypt($encryptedData)
+    public static function decrypt($data)
     {
         try {
-            return Crypt::decryptString($encryptedData);
+            return Crypt::decryptString($data);
         } catch (\Exception $e) {
-            return 'Decription Failed: ' . $e->getMessage();
+            return null;
         }
     }
 }
+

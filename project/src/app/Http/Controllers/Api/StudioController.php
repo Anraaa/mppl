@@ -33,6 +33,7 @@ class StudioController extends Controller
      *     )
      * )
      */
+
     public function index()
     {
         $data = Studio::all();
@@ -42,10 +43,13 @@ class StudioController extends Controller
             'data' => $data
         ];
 
-        return response()->json([
-            'data' => EncryptionHelper::encrypt(json_encode($response))
-        ]);
+        return response(
+            EncryptionHelper::encrypt(json_encode($response)),
+            200,
+            ['Content-Type' => 'text/plain']
+        );
     }
+
 
     /**
      * @OA\Post(
@@ -209,43 +213,42 @@ class StudioController extends Controller
         ]);
     }
 
-/**
- * @OA\Post(
- *     path="/api/studios/decrypt",
- *     operationId="decryptStudioData",
- *     tags={"Studios"},
- *     summary="Decrypt encrypted studio data",
- *     description="Returns original data from encrypted studio response",
- *     security={{"ApiKeyAuth":{}}}, 
- *     @OA\RequestBody(
- *         required=true,
- *         @OA\JsonContent(
- *             @OA\Property(property="data", type="string", example="encrypted-data")
- *         )
- *     ),
- *     @OA\Response(
- *         response=200,
- *         description="Decryption successful",
- *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string", example="success"),
- *             @OA\Property(property="data", type="object")
- *         )
- *     )
- * )
- */
-public function decryptResponse(Request $request)
-{
-    try {
-        $decrypted = EncryptionHelper::decrypt($request->input('data'));
-        $decoded = json_decode($decrypted, true);
+    /**
+     * @OA\Post(
+     *     path="/api/studios/decrypt",
+     *     operationId="decryptStudioData",
+     *     tags={"Studios"},
+     *     summary="Decrypt encrypted studio data",
+     *     description="Returns original data from encrypted studio response",
+     *     security={{"ApiKeyAuth":{}}}, 
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="string", example="encrypted-data")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Decryption successful",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="success"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
+    public function decryptResponse(Request $request)
+    {
+        try {
+            $decrypted = EncryptionHelper::decrypt($request->input('data'));
+            $decoded = json_decode($decrypted, true);
 
-        return response()->json($decoded);
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Decrypt failed',
-            'error' => $e->getMessage()
-        ], 400);
+            return response()->json($decoded);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Decrypt failed',
+                'error' => $e->getMessage()
+            ], 400);
+        }
     }
-}
-
 }

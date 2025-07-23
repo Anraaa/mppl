@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Responses\LoginResponse;
 use App\Policies\ActivityPolicy;
 use Filament\Actions\MountableAction;
 use Filament\Notifications\Livewire\Notifications;
@@ -23,6 +24,10 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Register any application services.
      */
+    public $singletons = [
+        \Filament\Http\Responses\Auth\Contracts\LoginResponse::class => LoginResponse::class,
+    ];
+
     public function register(): void
     {
         //
